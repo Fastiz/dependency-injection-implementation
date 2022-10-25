@@ -1,12 +1,31 @@
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertEquals
 
-class A
-class B(a: A)
-class C(a: A)
-class D(b: B)
-class E(a: A, d: D)
+interface Printable {
+    fun print(): String
+}
+
+class A : Printable {
+    override fun print() = "A"
+}
+
+class B(a: A) : Printable {
+    override fun print() = "B"
+}
+
+class C(a: A) : Printable {
+    override fun print() = "C"
+}
+
+class D(b: B) : Printable {
+    override fun print() = "D"
+}
+
+class E(a: A, d: D) : Printable {
+    override fun print() = "E"
+}
 
 class ModuleTest {
 
@@ -25,6 +44,19 @@ class ModuleTest {
         assertDoesNotThrow { module.get<C>() }
         assertDoesNotThrow { module.get<D>() }
         assertDoesNotThrow { module.get<E>() }
+    }
+
+    @Test
+    fun instancesMatchTheClasses() {
+        val module = Module.builder {
+            single { A() }
+            single { B(get()) }
+            single { C(get()) }
+        }
+
+        assertEquals("A", module.get<A>().print())
+        assertEquals("B", module.get<B>().print())
+        assertEquals("C", module.get<C>().print())
     }
 
     @Test
