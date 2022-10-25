@@ -1,20 +1,10 @@
 import kotlin.reflect.KClass
 
-class ClassFactory(
-    val clazz: KClass<*>,
-    val factory: () -> Any,
-)
-
-class ClassInstance(
-    val clazz: KClass<*>,
-    val instance: Any,
-)
-
 class UnresolvedDependency(dependencyName: String) : Throwable(dependencyName)
 
 class Module {
-    private val factories = mutableListOf<ClassFactory>()
-    private val instances = mutableListOf<ClassInstance>()
+    private val factories = mutableMapOf<KClass<*>, () -> Any>()
+    private val instances = mutableMapOf<KClass<*>, Any>()
 
     inline fun <reified T : Any> single(noinline factory: () -> T) {
         val clazz = T::class
@@ -22,8 +12,7 @@ class Module {
     }
 
     fun single(clazz: KClass<*>, factory: () -> Any) {
-        val classFactory = ClassFactory(clazz, factory)
-        factories.add(classFactory)
+        factories[clazz] = factory
     }
 
     inline fun <reified T> get(): T {
@@ -32,17 +21,17 @@ class Module {
     }
 
     fun <T> get(clazz: KClass<*>): T {
-        val classInstance = instances.find { it.clazz == clazz }
+        val classInstance = instances[clazz]
 
         if (classInstance != null) {
-            return classInstance.instance as T
+            return classInstance as T
         }
 
-        val factoryInstance = factories.find { it.clazz == clazz }
+        val factoryInstance = factories[clazz]
 
         if (factoryInstance != null) {
-            val newInstance = factoryInstance.factory()
-            instances.add(ClassInstance(clazz, newInstance))
+            val newInstance = factoryInstance()
+            instances[clazz] = newInstance
             return newInstance as T
         }
 
