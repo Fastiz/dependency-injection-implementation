@@ -1,4 +1,5 @@
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -23,14 +24,11 @@ class ModuleTest {
             single { E(get(), get()) }
         }
 
-        val classes = mod.instances.map { it.clazz }
-
-        assertContains(classes, A::class)
-        assertContains(classes, B::class)
-        assertContains(classes, C::class)
-        assertContains(classes, D::class)
-        assertContains(classes, E::class)
-        assertEquals(5, mod.instances.size)
+        assertDoesNotThrow { mod.get<A>() }
+        assertDoesNotThrow { mod.get<B>() }
+        assertDoesNotThrow { mod.get<C>() }
+        assertDoesNotThrow { mod.get<D>() }
+        assertDoesNotThrow { mod.get<E>() }
     }
 
     @Test

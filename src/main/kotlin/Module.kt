@@ -10,11 +10,11 @@ class ClassInstance(
     val instance: Any,
 )
 
-class UnresolvedDependency(val dependencyName: String) : Throwable()
+class UnresolvedDependency(dependencyName: String) : Throwable(dependencyName)
 
 class Module {
-    val factories = mutableListOf<ClassFactory>()
-    val instances = mutableListOf<ClassInstance>()
+    private val factories = mutableListOf<ClassFactory>()
+    private val instances = mutableListOf<ClassInstance>()
 
     fun configure(executor: Module.() -> Unit) {
         this.executor()
@@ -45,17 +45,27 @@ class Module {
     }
 
     inline fun <reified T : Any> single(noinline factory: () -> T) {
-        val classFactory = ClassFactory(T::class, factory)
+        val clazz = T::class
+        single(clazz, factory)
+    }
+
+    fun single(clazz: KClass<*>, factory: () -> Any) {
+        val classFactory = ClassFactory(clazz, factory)
         factories.add(classFactory)
     }
 
     inline fun <reified T> get(): T {
-        val classInstance = instances.find { it.clazz == T::class }
+        val clazz = T::class
+        return get(clazz)
+    }
+
+    fun <T> get(clazz: KClass<*>): T {
+        val classInstance = instances.find { it.clazz == clazz }
 
         if (classInstance != null) {
             return classInstance.instance as T
         }
 
-        throw UnresolvedDependency(T::class.toString())
+        throw UnresolvedDependency(clazz.toString())
     }
 }
