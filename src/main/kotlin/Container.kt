@@ -2,7 +2,7 @@ import kotlin.reflect.KClass
 
 class UnresolvedDependency(dependencyName: String) : Throwable(dependencyName)
 
-class Module {
+class Container {
     private val factories = mutableMapOf<KClass<*>, () -> Any>()
     private val instances = mutableMapOf<KClass<*>, Any>()
 
@@ -39,8 +39,8 @@ class Module {
     }
 
     companion object {
-        fun builder(executor: Module.() -> Unit): Module {
-            return Module().apply(executor)
+        fun builder(executor: Container.() -> Unit): Container {
+            return Container().apply(executor)
         }
     }
 }
