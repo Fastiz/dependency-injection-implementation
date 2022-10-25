@@ -16,34 +16,6 @@ class Module {
     private val factories = mutableListOf<ClassFactory>()
     private val instances = mutableListOf<ClassInstance>()
 
-    fun configure(executor: Module.() -> Unit) {
-        this.executor()
-
-        var modified = true
-        var unresolvedDependencies: MutableList<UnresolvedDependency>
-        var remainingFactories = factories
-        while (remainingFactories.isNotEmpty() && modified) {
-            modified = false
-            unresolvedDependencies = mutableListOf()
-            val aux = mutableListOf<ClassFactory>()
-            remainingFactories.forEach {
-                try {
-                    val instance = it.factory()
-                    instances.add(ClassInstance(it.clazz, instance))
-                    modified = true
-                } catch (e: UnresolvedDependency) {
-                    unresolvedDependencies.add(e)
-                    aux.add(it)
-                }
-            }
-            remainingFactories = aux
-        }
-
-        if (remainingFactories.isNotEmpty()) {
-            throw UnresolvedDependency(remainingFactories.joinToString { it.clazz.toString() })
-        }
-    }
-
     inline fun <reified T : Any> single(noinline factory: () -> T) {
         val clazz = T::class
         single(clazz, factory)
@@ -66,6 +38,20 @@ class Module {
             return classInstance.instance as T
         }
 
+        val factoryInstance = factories.find { it.clazz == clazz }
+
+        if (factoryInstance != null) {
+            val newInstance = factoryInstance.factory()
+            instances.add(ClassInstance(clazz, newInstance))
+            return newInstance as T
+        }
+
         throw UnresolvedDependency(clazz.toString())
+    }
+
+    companion object {
+        fun builder(executor: Module.() -> Unit): Module {
+            return Module().apply(executor)
+        }
     }
 }
