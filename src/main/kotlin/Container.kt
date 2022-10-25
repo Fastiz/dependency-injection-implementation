@@ -17,14 +17,14 @@ class Container {
 
     inline fun <reified T> get(): T {
         val clazz = T::class
-        return get(clazz)
+        return get(clazz) as T
     }
 
-    fun <T> get(clazz: KClass<*>): T {
+    fun get(clazz: KClass<*>): Any {
         val classInstance = instances[clazz]
 
         if (classInstance != null) {
-            return classInstance as T
+            return classInstance
         }
 
         val factoryInstance = factories[clazz]
@@ -32,7 +32,7 @@ class Container {
         if (factoryInstance != null) {
             val newInstance = factoryInstance()
             instances[clazz] = newInstance
-            return newInstance as T
+            return newInstance
         }
 
         throw UnresolvedDependency(clazz.toString())
